@@ -8,7 +8,7 @@ const Robot = () => {
   const movementRef = useRef(null);
   const danceRef = useRef(null);
 
-  const [position, setPosition] = useState({ x: 135, y: 135 });
+  const [position, setPosition] = useState({ x: 280, y: 125 });
   const [scale, setScale] = useState(1);
   const [status, setStatus] = useState("Idle");
   const [listening, setListening] = useState(false);
@@ -17,7 +17,21 @@ const Robot = () => {
   /*** --- CONSTANTS --- ***/
   const step = 20;
   const scaleStep = 0.1;
-  const dancePattern = ["forward","forward","right","backward","left","down","up","right","left"];
+  const dancePattern = [
+    "forward",
+    "forward",
+    "right",
+    "backward",
+    "left",
+    "down",
+    "up",
+    "right",
+    "right",
+    "right",
+    "up",
+    "right",
+    "left",
+  ];
 
   /*** --- DRAW FUNCTIONS --- ***/
   const drawRobot = (ctx, x, y, scale) => {
@@ -97,7 +111,7 @@ const Robot = () => {
   const startMove = (direction) => {
     stopMove();
     if (mode === "continuous") {
-      movementRef.current = setInterval(() => move(direction), 200);
+      movementRef.current = setInterval(() => move(direction), 400);
     } else {
       move(direction);
     }
@@ -135,7 +149,8 @@ const Robot = () => {
 
   // Initialize speech recognition ONCE
   useEffect(() => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const SpeechRecognition =
+      window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
       alert("Speech Recognition not supported in this browser");
       return;
@@ -146,17 +161,22 @@ const Robot = () => {
     recognition.lang = "en-US";
 
     recognition.onresult = (event) => {
-      const command = event.results[event.results.length - 1][0].transcript.toLowerCase().trim();
+      const command = event.results[event.results.length - 1][0].transcript
+        .toLowerCase()
+        .trim();
 
       setStatus(command);
       stopMove();
       stopDance();
 
-      if (["left","right","up","down","forward","backward"].includes(command)) {
-        startMove(command);
-      } else if (command === "dance") {
-        startDance();
-      } else if (command === "stop") {
+      if (command.includes("left")) startMove("left");
+      if (command.includes("right")) startMove("right");
+      if (command.includes("up")) startMove("up");
+      if (command.includes("down")) startMove("down");
+      if (command.includes("forward")) startMove("forward");
+      if (command.includes("backward")) startMove("backward");
+      if (command.includes("dance")) startDance();
+      if (command.includes(stop)) {
         stopMove();
         stopDance();
       }
@@ -166,7 +186,7 @@ const Robot = () => {
     recognition.onend = () => setListening(false);
 
     recognitionRef.current = recognition;
-  }, []); // only once on mount
+  }, [mode]); // only once on mount
 
   /*** --- HANDLERS --- ***/
   const toggleListening = () => {
@@ -181,22 +201,24 @@ const Robot = () => {
 
   /*** --- JSX --- ***/
   return (
-    <div className="w-full h-full flex flex-col items-center gap-6 px-6 bg-blue-100">
+    <div className="w-full h-full flex flex-col items-center gap-6 px-2 md:px-6 bg-blue-100">
       <h2 className="text-2xl font-bold text-gray-800 mt-10">
         Voice-Controlled Virtual Robot
       </h2>
 
       <canvas
         ref={canvasRef}
-        width={"100%"}
-        height={"100%"}
-        className="border-2 border-gray-300 rounded-lg bg-gray-50  w-full md:w-[80%] h-80 md:h-auto"
+        width={600}
+        height={300}
+        className="border-2 border-gray-300 rounded-lg bg-gray-50 w-full md:w-[80%] h-60 md:h-120"
       />
 
       <button
         onClick={toggleListening}
         className={`relative flex items-center justify-center w-16 h-16 rounded-full transition ${
-          listening ? "bg-blue-600 animate-pulse shadow-lg" : "bg-gray-300 hover:bg-gray-400"
+          listening
+            ? "bg-blue-600 animate-pulse shadow-lg"
+            : "bg-gray-300 hover:bg-gray-400"
         }`}
       >
         {listening ? (
@@ -206,7 +228,9 @@ const Robot = () => {
         )}
       </button>
 
-      <p className={`text-sm font-medium ${listening ? "text-blue-600" : "text-gray-500"}`}>
+      <p
+        className={`text-sm font-medium ${listening ? "text-blue-600" : "text-gray-500"}`}
+      >
         {listening ? "Listening..." : "Click the microphone to speak"}
       </p>
 
@@ -215,7 +239,9 @@ const Robot = () => {
         <button
           onClick={toggleMode}
           className={`px-4 py-1 rounded-full font-light transition ${
-            mode === "single" ? "bg-green-500 text-white" : "bg-gray-300 text-gray-700 hover:bg-gray-400"
+            mode === "single"
+              ? "bg-green-500 text-white"
+              : "bg-gray-300 text-gray-700 hover:bg-gray-400"
           }`}
         >
           Single
@@ -223,7 +249,9 @@ const Robot = () => {
         <button
           onClick={toggleMode}
           className={`px-4 py-1 rounded-full font-semibold transition ${
-            mode === "continuous" ? "bg-green-500 text-white" : "bg-gray-300 text-gray-700 hover:bg-gray-400"
+            mode === "continuous"
+              ? "bg-green-500 text-white"
+              : "bg-gray-300 text-gray-700 hover:bg-gray-400"
           }`}
         >
           Continuous
@@ -241,12 +269,24 @@ const Robot = () => {
         <p className="font-semibold mb-2">How to use:</p>
         <ul className="list-disc list-inside space-y-1">
           <li>Click the microphone button to start listening</li>
-          <li>Say: <b>forward</b> (grows), <b>backward</b> (shrinks)</li>
-          <li>Say: <b>up</b> or <b>down</b> for vertical movement</li>
-          <li>Say: <b>left</b> or <b>right</b> for horizontal movement</li>
-          <li>Say: <b>dance</b> to perform a dance sequence</li>
-          <li>Say <b>stop</b> to halt movement or dance</li>
-          <li>Select <b>Single</b> or <b>Continuous</b> mode</li>
+          <li>
+            Say: <b>forward</b> (grows), <b>backward</b> (shrinks)
+          </li>
+          <li>
+            Say: <b>up</b> or <b>down</b> for vertical movement
+          </li>
+          <li>
+            Say: <b>left</b> or <b>right</b> for horizontal movement
+          </li>
+          <li>
+            Say: <b>dance</b> to perform a dance sequence
+          </li>
+          <li>
+            Say <b>stop</b> to halt movement or dance
+          </li>
+          <li>
+            Select <b>Single</b> or <b>Continuous</b> mode
+          </li>
         </ul>
       </div>
     </div>
