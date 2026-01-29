@@ -2,23 +2,26 @@ import { useEffect, useRef, useState } from "react";
 import { FaMicrophone, FaMicrophoneSlash } from "react-icons/fa";
 
 const Robot = () => {
+  /*** --- STATE & REFS --- ***/
   const canvasRef = useRef(null);
   const recognitionRef = useRef(null);
   const movementRef = useRef(null);
   const danceRef = useRef(null);
 
   const [position, setPosition] = useState({ x: 135, y: 135 });
+  const [scale, setScale] = useState(1);
   const [status, setStatus] = useState("Idle");
   const [listening, setListening] = useState(false);
   const [mode, setMode] = useState("single"); // single or continuous
-  const [scale, setScale] = useState(1); // simulate forward/backward
 
-  const step = 20; // horizontal / vertical step
-  const scaleStep = 0.1; // scale step for forward/backward
+  /*** --- CONSTANTS --- ***/
+  const step = 20;
+  const scaleStep = 0.1;
+  const dancePattern = ["forward","forward","right","backward","left","down","up","right","left"];
 
-  // Draw a cartoon robot with scaling
+  /*** --- DRAW FUNCTIONS --- ***/
   const drawRobot = (ctx, x, y, scale) => {
-    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height); // clear whole canvas
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
     const w = 30 * scale;
     const h = 40 * scale;
@@ -63,20 +66,7 @@ const Robot = () => {
     ctx.fillRect(x + 0.65 * w, y + headH + h, legW, legH);
   };
 
-  // Dance pattern
-  const dancePattern = [
-    "forward",
-    "forward",
-    "right",
-    "backward",
-    "left",
-    "down",
-    "up",
-    "right",
-    "left",
-  ];
-
-  // Movement logic
+  /*** --- MOVEMENT FUNCTIONS --- ***/
   const move = (direction) => {
     setPosition((prev) => {
       let newPos = { ...prev };
@@ -97,7 +87,6 @@ const Robot = () => {
       return newPos;
     });
 
-    // Scale for forward/backward
     setScale((prev) => {
       if (direction === "forward") return Math.min(prev + scaleStep, 2);
       if (direction === "backward") return Math.max(prev - scaleStep, 0.5);
@@ -105,7 +94,6 @@ const Robot = () => {
     });
   };
 
-  // Start move based on mode
   const startMove = (direction) => {
     stopMove();
     if (mode === "continuous") {
@@ -123,11 +111,11 @@ const Robot = () => {
   };
 
   const startDance = () => {
-    let stepIndex = 0;
+    let index = 0;
     stopDance();
     danceRef.current = setInterval(() => {
-      move(dancePattern[stepIndex]);
-      stepIndex = (stepIndex + 1) % dancePattern.length;
+      move(dancePattern[index]);
+      index = (index + 1) % dancePattern.length;
     }, 300);
   };
 
@@ -138,17 +126,16 @@ const Robot = () => {
     }
   };
 
+  /*** --- EFFECTS --- ***/
   // Redraw robot whenever position or scale changes
   useEffect(() => {
     const ctx = canvasRef.current.getContext("2d");
     drawRobot(ctx, position.x, position.y, scale);
   }, [position, scale]);
 
-  // Initialize speech recognition (only once)
+  // Initialize speech recognition ONCE
   useEffect(() => {
-    const SpeechRecognition =
-      window.SpeechRecognition || window.webkitSpeechRecognition;
-
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
       alert("Speech Recognition not supported in this browser");
       return;
@@ -159,33 +146,19 @@ const Robot = () => {
     recognition.lang = "en-US";
 
     recognition.onresult = (event) => {
-      const command = event.results[event.results.length - 1][0].transcript
-        .toLowerCase()
-        .trim();
+      const command = event.results[event.results.length - 1][0].transcript.toLowerCase().trim();
 
       setStatus(command);
-
-      // Stop any previous move or dance
       stopMove();
       stopDance();
 
-      // Respond to commands
-      switch (command) {
-        case "left":
-        case "right":
-        case "up":
-        case "down":
-        case "forward":
-        case "backward":
-          startMove(command);
-          break;
-        case "stop":
-          stopMove();
-          stopDance();
-          break;
-        case "dance":
-          startDance();
-          break;
+      if (["left","right","up","down","forward","backward"].includes(command)) {
+        startMove(command);
+      } else if (command === "dance") {
+        startDance();
+      } else if (command === "stop") {
+        stopMove();
+        stopDance();
       }
     };
 
@@ -193,20 +166,20 @@ const Robot = () => {
     recognition.onend = () => setListening(false);
 
     recognitionRef.current = recognition;
-  }, []); // initialize once
+  }, []); // only once on mount
 
-  // Toggle microphone listening
+  /*** --- HANDLERS --- ***/
   const toggleListening = () => {
     if (!recognitionRef.current) return;
     listening ? recognitionRef.current.stop() : recognitionRef.current.start();
   };
 
-  // Toggle single/continuous mode
   const toggleMode = () => {
     setMode((prev) => (prev === "single" ? "continuous" : "single"));
     stopMove();
   };
 
+  /*** --- JSX --- ***/
   return (
     <div className="w-full h-full flex flex-col items-center gap-6 px-6 bg-blue-100">
       <h2 className="text-2xl font-bold text-gray-800 mt-10">
@@ -215,17 +188,15 @@ const Robot = () => {
 
       <canvas
         ref={canvasRef}
-        width={600}
-        height={300}
-        className="border-2 border-gray-300 rounded-lg bg-gray-50"
+        width={"100%"}
+        height={"100%"}
+        className="border-2 border-gray-300 rounded-lg bg-gray-50  w-full md:w-[80%] h-80 md:h-auto"
       />
 
       <button
         onClick={toggleListening}
         className={`relative flex items-center justify-center w-16 h-16 rounded-full transition ${
-          listening
-            ? "bg-blue-600 animate-pulse shadow-lg"
-            : "bg-gray-300 hover:bg-gray-400"
+          listening ? "bg-blue-600 animate-pulse shadow-lg" : "bg-gray-300 hover:bg-gray-400"
         }`}
       >
         {listening ? (
@@ -235,21 +206,16 @@ const Robot = () => {
         )}
       </button>
 
-      <p
-        className={`text-sm font-medium ${listening ? "text-blue-600" : "text-gray-500"}`}
-      >
+      <p className={`text-sm font-medium ${listening ? "text-blue-600" : "text-gray-500"}`}>
         {listening ? "Listening..." : "Click the microphone to speak"}
       </p>
 
-      {/* Movement Mode Toggle */}
       <div className="flex items-center gap-2 text-xs">
         <span className="font-medium">Mode:</span>
         <button
           onClick={toggleMode}
           className={`px-4 py-1 rounded-full font-light transition ${
-            mode === "single"
-              ? "bg-green-500 text-white"
-              : "bg-gray-300 text-gray-700 hover:bg-gray-400"
+            mode === "single" ? "bg-green-500 text-white" : "bg-gray-300 text-gray-700 hover:bg-gray-400"
           }`}
         >
           Single
@@ -257,16 +223,13 @@ const Robot = () => {
         <button
           onClick={toggleMode}
           className={`px-4 py-1 rounded-full font-semibold transition ${
-            mode === "continuous"
-              ? "bg-green-500 text-white"
-              : "bg-gray-300 text-gray-700 hover:bg-gray-400"
+            mode === "continuous" ? "bg-green-500 text-white" : "bg-gray-300 text-gray-700 hover:bg-gray-400"
           }`}
         >
           Continuous
         </button>
       </div>
 
-      {/* Command Display */}
       <div className="text-center">
         <p className="text-sm text-gray-700">
           <span className="font-semibold">Last command:</span>{" "}
@@ -274,29 +237,16 @@ const Robot = () => {
         </p>
       </div>
 
-      {/* Instructions */}
       <div className="text-xs text-gray-600 bg-gray-100 p-4 rounded-lg w-full">
         <p className="font-semibold mb-2">How to use:</p>
         <ul className="list-disc list-inside space-y-1">
           <li>Click the microphone button to start listening</li>
-          <li>
-            Say: <b>forward</b> (grows), <b>backward</b> (shrinks)
-          </li>
-          <li>
-            Say: <b>up</b> or <b>down</b> for vertical movement
-          </li>
-          <li>
-            Say: <b>left</b> or <b>right</b> for horizontal movement
-          </li>
-          <li>
-            Say: <b>dance</b> to perform a dance sequence
-          </li>
-          <li>
-            Say <b>stop</b> to halt continuous movement or dance
-          </li>
-          <li>
-            Select <b>Single</b> or <b>Continuous</b> mode
-          </li>
+          <li>Say: <b>forward</b> (grows), <b>backward</b> (shrinks)</li>
+          <li>Say: <b>up</b> or <b>down</b> for vertical movement</li>
+          <li>Say: <b>left</b> or <b>right</b> for horizontal movement</li>
+          <li>Say: <b>dance</b> to perform a dance sequence</li>
+          <li>Say <b>stop</b> to halt movement or dance</li>
+          <li>Select <b>Single</b> or <b>Continuous</b> mode</li>
         </ul>
       </div>
     </div>
