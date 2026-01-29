@@ -63,6 +63,19 @@ const Robot = () => {
     ctx.fillRect(x + 0.65 * w, y + headH + h, legW, legH);
   };
 
+  // Dance pattern
+  const dancePattern = [
+    "forward",
+    "forward",
+    "right",
+    "backward",
+    "left",
+    "down",
+    "up",
+    "right",
+    "left",
+  ];
+
   // Movement logic
   const move = (direction) => {
     setPosition((prev) => {
@@ -181,19 +194,6 @@ const Robot = () => {
 
     recognitionRef.current = recognition;
   }, []); // initialize once
-
-  // Dance pattern
-  const dancePattern = [
-    "forward",
-    "forward",
-    "right",
-    "backward",
-    "left",
-    "down",
-    "up",
-    "right",
-    "left",
-  ];
 
   // Toggle microphone listening
   const toggleListening = () => {
