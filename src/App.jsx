@@ -5,6 +5,7 @@ import UIOverlay from "./component/UIOverlay";
 export default function App() {
   // Shared refs
   const refs = {
+    robot: useRef(),
     torso: useRef(),
     head: useRef(),
     leftArm: useRef(),

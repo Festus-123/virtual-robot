@@ -1,44 +1,127 @@
-import { useEffect } from "react";
-import VoiceController from "./voiceController";
+import { useRef } from "react";
 
-export default function useRobotVoice(refs) {
-  useEffect(() => {
-    if (!refs) return;
+export default function useRobot() {
+  // ===== BODY PART REFS =====
+  const leftLeg = useRef(null);
+  const rightLeg = useRef(null);
+  const leftArm = useRef(null);
+  const rightArm = useRef(null);
+  const body = useRef(null);
 
-    const commands = {
-      walk: () => {
-        console.log("Walking!");
-        refs.leftLeg.current.rotation.x = 0.5;
-        refs.rightLeg.current.rotation.x = -0.5;
-      },
-      stop: () => {
-        console.log("Stopping!");
-        refs.leftLeg.current.rotation.x = 0;
-        refs.rightLeg.current.rotation.x = 0;
-      },
-      "raise hand": () => {
-        refs.leftArm.current.rotation.x = -1;
-        refs.rightArm.current.rotation.x = -1;
-      },
-      "lower hand": () => {
-        refs.leftArm.current.rotation.x = 0;
-        refs.rightArm.current.rotation.x = 0;
-      },
-      "look left": () => {
-        refs.head.current.rotation.y = 0.5;
-      },
-      "look right": () => {
-        refs.head.current.rotation.y = -0.5;
-      },
-      "center head": () => {
-        refs.head.current.rotation.y = 0;
-      },
-    };
+  // ===== INTERVAL REFS (FIX) =====
+  const walkInterval = useRef(null);
+  const danceInterval = useRef(null);
 
-    const recognition = VoiceController(commands);
+  // ===== HELPERS =====
+  const setTransform = (ref, value) => {
+    if (ref.current) ref.current.style.transform = value;
+  };
 
-    return () => {
-      if (recognition) recognition.stop();
-    };
-  }, [refs]);
+  const clearAll = () => {
+    if (walkInterval.current) {
+      clearInterval(walkInterval.current);
+      walkInterval.current = null;
+    }
+
+    if (danceInterval.current) {
+      clearInterval(danceInterval.current);
+      danceInterval.current = null;
+    }
+  };
+
+  // ===== BASIC MOVEMENT =====
+  const moveForward = () => {
+    clearAll();
+    setTransform(body, "translateY(-20px)");
+  };
+
+  const moveBackward = () => {
+    clearAll();
+    setTransform(body, "translateY(20px)");
+  };
+
+  const turnLeft = () => {
+    clearAll();
+    setTransform(body, "rotate(-15deg)");
+  };
+
+  const turnRight = () => {
+    clearAll();
+    setTransform(body, "rotate(15deg)");
+  };
+
+  const stop = () => {
+    clearAll();
+    setTransform(body, "none");
+    setTransform(leftLeg, "none");
+    setTransform(rightLeg, "none");
+    setTransform(leftArm, "none");
+    setTransform(rightArm, "none");
+  };
+
+  // ===== WALKING =====
+  const walkForward = () => {
+    clearAll();
+    let step = false;
+
+    walkInterval.current = setInterval(() => {
+      step = !step;
+
+      setTransform(leftLeg, step ? "rotate(20deg)" : "rotate(-10deg)");
+      setTransform(rightLeg, step ? "rotate(-10deg)" : "rotate(20deg)");
+
+      setTransform(leftArm, step ? "rotate(-15deg)" : "rotate(15deg)");
+      setTransform(rightArm, step ? "rotate(15deg)" : "rotate(-15deg)");
+
+      setTransform(body, "translateY(-2px)");
+    }, 300);
+  };
+
+  const walkLeft = () => {
+    clearAll();
+    setTransform(body, "translateX(-20px)");
+  };
+
+  const walkRight = () => {
+    clearAll();
+    setTransform(body, "translateX(20px)");
+  };
+
+  // ===== DANCE =====
+  const dance = () => {
+    clearAll();
+    let beat = false;
+
+    danceInterval.current = setInterval(() => {
+      beat = !beat;
+
+      setTransform(body, beat ? "rotate(10deg)" : "rotate(-10deg)");
+      setTransform(leftArm, beat ? "rotate(60deg)" : "rotate(-20deg)");
+      setTransform(rightArm, beat ? "rotate(-60deg)" : "rotate(20deg)");
+      setTransform(leftLeg, beat ? "rotate(20deg)" : "rotate(-20deg)");
+      setTransform(rightLeg, beat ? "rotate(-20deg)" : "rotate(20deg)");
+    }, 400);
+  };
+
+  // ===== EXPORT =====
+  return {
+    refs: {
+      leftLeg,
+      rightLeg,
+      leftArm,
+      rightArm,
+      body,
+    },
+    actions: {
+      moveForward,
+      moveBackward,
+      turnLeft,
+      turnRight,
+      walkForward,
+      walkLeft,
+      walkRight,
+      dance,
+      stop,
+    },
+  };
 }
