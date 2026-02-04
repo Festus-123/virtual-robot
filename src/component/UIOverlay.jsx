@@ -5,7 +5,10 @@ export default function UIOverlay({ refs }) {
   const [lastCommand, setLastCommand] = useState("None");
   const [recognition, setRecognition] = useState(null);
 
-  const startListening = () => {
+  useEffect(() => {
+    if (!listening) return; // only run if user starts listening
+    if (!refs) return; // refs not ready yet
+
     if (!("webkitSpeechRecognition" in window || "SpeechRecognition" in window)) {
       alert("Web Speech API not supported");
       return;
@@ -23,10 +26,9 @@ export default function UIOverlay({ refs }) {
       const transcript = event.results[event.results.length - 1][0].transcript
         .trim()
         .toLowerCase();
-
       setLastCommand(transcript);
 
-      // Only execute if refs exist
+      // Safe null checks
       const leftLeg = refs.leftLeg?.current;
       const rightLeg = refs.rightLeg?.current;
       const leftArm = refs.leftArm?.current;
@@ -95,17 +97,20 @@ export default function UIOverlay({ refs }) {
 
     recog.start();
     setRecognition(recog);
-    setListening(true);
-  };
 
-  const stopListening = () => {
-    if (recognition) recognition.stop();
-    setListening(false);
+    return () => {
+      recog.stop(); // cleanup when unmounting or stopping
+    };
+  }, [listening, refs]);
+
+  const toggleListening = () => {
+    setListening((prev) => !prev);
   };
 
   return (
     <div className="pointer-events-none fixed inset-0 z-10">
       <div className="flex h-full w-full flex-col justify-between p-6">
+
         {/* Header */}
         <div className="pointer-events-auto self-start rounded-xl bg-black/60 px-5 py-3 text-white backdrop-blur">
           <h1 className="text-lg font-semibold">Virtual 3D Robot</h1>
@@ -115,7 +120,7 @@ export default function UIOverlay({ refs }) {
         {/* Mic & Status */}
         <div className="pointer-events-auto self-center rounded-xl bg-black/60 px-6 py-4 text-white backdrop-blur flex flex-col items-center gap-2">
           <button
-            onClick={listening ? stopListening : startListening}
+            onClick={toggleListening}
             className={`px-5 py-2 rounded-lg font-semibold text-white ${
               listening ? "bg-red-600" : "bg-green-600"
             }`}

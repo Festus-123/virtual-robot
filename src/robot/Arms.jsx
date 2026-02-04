@@ -1,6 +1,8 @@
-export default function Arms({ position }) {
+import { forwardRef } from "react";
+
+const Arms = forwardRef(({ position }, ref) => {
   return (
-    <group position={position}>
+    <group ref={ref} position={position}>
       {/* Shoulder joint */}
       <mesh>
         <sphereGeometry args={[0.15, 16, 16]} />
@@ -30,4 +32,6 @@ export default function Arms({ position }) {
       </mesh>
     </group>
   );
-}
+});
+
+export default Arms;
