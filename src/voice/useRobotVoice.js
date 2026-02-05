@@ -1,127 +1,143 @@
-import { useRef } from "react";
+// src/voice/useRobotVoice.jsx
+import { useState, useRef, useEffect } from "react";
 
-export default function useRobot() {
-  // ===== BODY PART REFS =====
-  const leftLeg = useRef(null);
-  const rightLeg = useRef(null);
-  const leftArm = useRef(null);
-  const rightArm = useRef(null);
-  const body = useRef(null);
+export default function useRobotVoice(refs) {
+  const [listening, setListening] = useState(false);
+  const [lastCommand, setLastCommand] = useState("None");
+  const recognitionRef = useRef(null);
 
-  // ===== INTERVAL REFS (FIX) =====
-  const walkInterval = useRef(null);
-  const danceInterval = useRef(null);
+  const commandsMap = {
+    walk: () => {
+      refs.leftLeg.current.rotation.x = 0.5;
+      refs.rightLeg.current.rotation.x = -0.5;
+    },
+    stop: () => {
+      refs.leftLeg.current.rotation.x = 0;
+      refs.rightLeg.current.rotation.x = 0;
+    },
+    "raise hands": () => {
+      refs.leftArm.current.rotation.x = -1;
+      refs.rightArm.current.rotation.x = -1;
+    },
+    "lower hands": () => {
+      refs.leftArm.current.rotation.x = 0;
+      refs.rightArm.current.rotation.x = 0;
+    },
+    "look left": () => {
+      refs.head.current.rotation.y = 0.5;
+    },
+    "look right": () => {
+      refs.head.current.rotation.y = -0.5;
+    },
+    center: () => {
+      refs.head.current.rotation.y = 0;
+    },
+    "go forward": () => {
+      if (refs.body.current) refs.body.current.position.z -= 0.2;
+    },
+    "go backward": () => {
+      if (refs.body.current) refs.body.current.position.z += 0.2;
+    },
+    "go left": () => {
+      if (refs.body.current) refs.body.current.position.x -= 0.2;
+    },
+    "go right": () => {
+      if (refs.body.current) refs.body.current.position.x += 0.2;
+    },
+    run: () => {
+      // Reuse previous dance/run movement
+      let beat = false;
+      if (recognitionRef.current.runInterval)
+        clearInterval(recognitionRef.current.runInterval);
 
-  // ===== HELPERS =====
-  const setTransform = (ref, value) => {
-    if (ref.current) ref.current.style.transform = value;
+      recognitionRef.current.runInterval = setInterval(() => {
+        beat = !beat;
+        refs.leftArm.current.rotation.x = beat ? 0.8 : -0.8;
+        refs.rightArm.current.rotation.x = beat ? -0.8 : 0.8;
+        refs.leftLeg.current.rotation.x = beat ? 0.5 : -0.5;
+        refs.rightLeg.current.rotation.x = beat ? -0.5 : 0.5;
+      }, 400);
+    },
+    dance: () => {
+      // Simple cute dance: swing arms side to side
+      let swing = false;
+      if (recognitionRef.current.danceInterval)
+        clearInterval(recognitionRef.current.danceInterval);
+
+      recognitionRef.current.danceInterval = setInterval(() => {
+        swing = !swing;
+        refs.leftArm.current.rotation.z = swing ? 0.5 : -0.5;
+        refs.rightArm.current.rotation.z = swing ? -0.5 : 0.5;
+      }, 500);
+    },
   };
 
-  const clearAll = () => {
-    if (walkInterval.current) {
-      clearInterval(walkInterval.current);
-      walkInterval.current = null;
+  const initRecognition = () => {
+    if (!("webkitSpeechRecognition" in window || "SpeechRecognition" in window)) {
+      alert("Web Speech API not supported in this browser");
+      return null;
     }
+    const SpeechRecognition =
+      window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recog = new SpeechRecognition();
+    recog.continuous = true;
+    recog.interimResults = false;
+    recog.lang = "en-US";
 
-    if (danceInterval.current) {
-      clearInterval(danceInterval.current);
-      danceInterval.current = null;
+    recog.onresult = (event) => {
+      const transcript =
+        event.results[event.results.length - 1][0].transcript
+          .trim()
+          .toLowerCase();
+      setLastCommand(transcript);
+
+      Object.keys(commandsMap).forEach((cmd) => {
+        if (transcript.includes(cmd)) {
+          commandsMap[cmd]();
+        }
+      });
+    };
+
+    recog.onerror = (event) =>
+      console.error("Speech recognition error:", event.error);
+
+    recog.onend = () => {
+      if (listening) recog.start(); // auto-restart
+    };
+
+    return recog;
+  };
+
+  const start = () => {
+    if (!recognitionRef.current) recognitionRef.current = initRecognition();
+    try {
+      recognitionRef.current.start();
+      setListening(true);
+    } catch (err) {
+      console.warn("Recognition start error:", err.message);
     }
-  };
-
-  // ===== BASIC MOVEMENT =====
-  const moveForward = () => {
-    clearAll();
-    setTransform(body, "translateY(-20px)");
-  };
-
-  const moveBackward = () => {
-    clearAll();
-    setTransform(body, "translateY(20px)");
-  };
-
-  const turnLeft = () => {
-    clearAll();
-    setTransform(body, "rotate(-15deg)");
-  };
-
-  const turnRight = () => {
-    clearAll();
-    setTransform(body, "rotate(15deg)");
   };
 
   const stop = () => {
-    clearAll();
-    setTransform(body, "none");
-    setTransform(leftLeg, "none");
-    setTransform(rightLeg, "none");
-    setTransform(leftArm, "none");
-    setTransform(rightArm, "none");
+    if (recognitionRef.current) recognitionRef.current.stop();
+    setListening(false);
+    if (recognitionRef.current?.runInterval)
+      clearInterval(recognitionRef.current.runInterval);
+    if (recognitionRef.current?.danceInterval)
+      clearInterval(recognitionRef.current.danceInterval);
   };
 
-  // ===== WALKING =====
-  const walkForward = () => {
-    clearAll();
-    let step = false;
+  useEffect(() => {
+    return () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+        if (recognitionRef.current?.runInterval)
+          clearInterval(recognitionRef.current.runInterval);
+        if (recognitionRef.current?.danceInterval)
+          clearInterval(recognitionRef.current.danceInterval);
+      }
+    };
+  }, []);
 
-    walkInterval.current = setInterval(() => {
-      step = !step;
-
-      setTransform(leftLeg, step ? "rotate(20deg)" : "rotate(-10deg)");
-      setTransform(rightLeg, step ? "rotate(-10deg)" : "rotate(20deg)");
-
-      setTransform(leftArm, step ? "rotate(-15deg)" : "rotate(15deg)");
-      setTransform(rightArm, step ? "rotate(15deg)" : "rotate(-15deg)");
-
-      setTransform(body, "translateY(-2px)");
-    }, 300);
-  };
-
-  const walkLeft = () => {
-    clearAll();
-    setTransform(body, "translateX(-20px)");
-  };
-
-  const walkRight = () => {
-    clearAll();
-    setTransform(body, "translateX(20px)");
-  };
-
-  // ===== DANCE =====
-  const dance = () => {
-    clearAll();
-    let beat = false;
-
-    danceInterval.current = setInterval(() => {
-      beat = !beat;
-
-      setTransform(body, beat ? "rotate(10deg)" : "rotate(-10deg)");
-      setTransform(leftArm, beat ? "rotate(60deg)" : "rotate(-20deg)");
-      setTransform(rightArm, beat ? "rotate(-60deg)" : "rotate(20deg)");
-      setTransform(leftLeg, beat ? "rotate(20deg)" : "rotate(-20deg)");
-      setTransform(rightLeg, beat ? "rotate(-20deg)" : "rotate(20deg)");
-    }, 400);
-  };
-
-  // ===== EXPORT =====
-  return {
-    refs: {
-      leftLeg,
-      rightLeg,
-      leftArm,
-      rightArm,
-      body,
-    },
-    actions: {
-      moveForward,
-      moveBackward,
-      turnLeft,
-      turnRight,
-      walkForward,
-      walkLeft,
-      walkRight,
-      dance,
-      stop,
-    },
-  };
+  return { start, stop, listening, lastCommand };
 }

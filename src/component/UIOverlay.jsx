@@ -30,6 +30,10 @@ export default function UIOverlay({ refs }) {
           <p className="text-sm text-cyan-300">Voice Controlled</p>
         </div>
 
+        <div className="pointer-events-auto fixed top-10 right-10 font-mono bg-[#0000005e] backdrop-blur-md rounded-xl p-4 ">
+            <h1 className="text-cyan-300 font-light text-2xl">Monoid</h1>
+        </div>
+
         {/* CENTER CONTROL */}
         <div className="pointer-events-auto self-center rounded-3xl bg-black/70 px-6 py-8 text-white backdrop-blur flex flex-col items-center gap-4">
           {/* Mic Control */}
