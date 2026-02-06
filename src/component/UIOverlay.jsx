@@ -1,5 +1,6 @@
 // src/component/UIOverlay.jsx
 import useRobotVoice from "../voice/useRobotVoice";
+import { FaMicrophone, FaMicrophoneAltSlash } from "react-icons/fa"
 
 export default function UIOverlay({ refs }) {
   const { start, stop, listening, lastCommand } = useRobotVoice(refs);
@@ -42,18 +43,24 @@ export default function UIOverlay({ refs }) {
         <div className="hidden md:block animate-ping absolute right-50 top-60">
             {lastCommand !== "none" && lastCommand !== "stop" ? ( <p className="text-cyan-100 font-light text-xs"> User is speaking rn...</p> ) : ( <p className="text-red-500 font-light text-xs">User hasn't said a word!!!</p> )}
         </div>
+        <div className="md:hidden absolute right-10 animate-pulse top-60 text-sm font-light text-cyan-300">
+            {`${lastCommand}!!!`}
+        </div>
 
         {/* CENTER CONTROL */}
-        <div className="pointer-events-auto self-center rounded-3xl bg-black/70 px-6 py-8 text-white backdrop-blur flex flex-col items-center gap-4">
+        <div className="relative pointer-events-auto self-center rounded-3xl bg-black/70 px-6 py-8 text-white backdrop-blur flex flex-col items-center gap-4">
           {/* Mic Control */}
+          <div className="relative">
+            <div className={`w-full h-full absolute inset-0 rounded-full p-1 bg-[#ffffff2f] animate-ping ${listening && "animate-pulse"}`}/>
           <button
             onClick={listening ? stop : start}
-            className={`w-48 py-3 rounded-xl font-semibold transition cursor-pointer ${
+            className={` relative p-3 rounded-full font-semibold transition cursor-pointer text-xl flex flex-col items-center justify-center ${
               listening ? "bg-red-600" : "bg-emerald-600"
             }`}
           >
-            {listening ? "Stop Listening 🎤" : "Start Listening 🎤"}
+            {listening ? ( <FaMicrophoneAltSlash />) : (<FaMicrophone />)}
           </button>
+            </div>
 
           {/* Last Command */}
           <p className="text-sm font-light">
@@ -61,7 +68,7 @@ export default function UIOverlay({ refs }) {
           </p>
 
           {/* Command Guide */}
-          <div className="text-xs text-gray-300 text-center grid grid-cols-4 sm:grid-cols-7 gap-2">
+          <div className="text-xs text-gray-300 text-center md:grid grid-cols-6 sm:grid-cols-7 gap-2 hidden">
             {commandsList.map((cmd) => (
               <span key={cmd} className="bg-gray-800/40 px-2 py-1 rounded font-light text-xs md:text-sm">
                 {cmd}

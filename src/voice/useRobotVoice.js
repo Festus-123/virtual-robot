@@ -123,9 +123,9 @@ const takeAWalk = () => {
   stopMotionLoop();
   rememberBasePosition();
 
-  const robot = refs.robot.current;
   phaseRef.current = 0;
   angleRef.current = 0;
+  const robot = refs.body.current;
 
   const radius = 2.2;
   const angularSpeed = 0.04;
@@ -133,7 +133,7 @@ const takeAWalk = () => {
   let returning = false;
 
   const animate = () => {
-    phaseRef.current += 0.1;
+    phaseRef.current += 0.22;
     const s = Math.sin(phaseRef.current);
 
     // limb motion
@@ -142,6 +142,8 @@ const takeAWalk = () => {
     refs.leftArm.current.rotation.x = -s * 0.35;
     refs.rightArm.current.rotation.x = s * 0.35;
     refs.head.current.rotation.y = s * 0.25;
+    refs.torso.current.rotation.x = -0.1;
+
 
     if (!returning) {
       angleRef.current += angularSpeed;
@@ -177,7 +179,7 @@ const takeAWalk = () => {
         return;
       }
     }
-
+    //   moveRobot(0, -0.05);
     motionRef.current = requestAnimationFrame(animate);
   };
 
@@ -193,7 +195,7 @@ const takeAWalk = () => {
 
     const animate = () => {
       phaseRef.current += 0.08;
-      setTimeout(() => phaseRef.current += 0.10, 2000)
+      setTimeout(() => phaseRef.current += 0.09, 2000)
       const s = Math.sin(phaseRef.current);
       const c = Math.cos(phaseRef.current);
 
@@ -240,7 +242,7 @@ const moveSteps = (dx, dz, steps = 40) => {
 
   let count = 0;
   phaseRef.current = 0;
-  const robot = refs.robot.current;
+  const robot = refs.body.current;
 
   robot.rotation.y = Math.atan2(dx, dz);
 
@@ -272,8 +274,8 @@ const moveSteps = (dx, dz, steps = 40) => {
 };
 
 
-const goForward = () => moveSteps(0, -2);
-const goBackward = () => moveSteps(0, 2);
+const goForward = () => moveSteps(0, 2);
+const goBackward = () => moveSteps(0, -2);
 const goLeft = () => moveSteps(-2, 0);
 const goRight = () => moveSteps(2, 0);
 
@@ -292,8 +294,8 @@ const jump = () => {
   stopMotionLoop();
   rememberBasePosition();
 
-  const robot = refs.robot.current;
-  let velocity = 0.28;
+  const robot = refs.body.current;
+  let velocity = 0.18;
   const gravity = 0.018;
   const groundY = robot.position.y;
 
@@ -302,8 +304,8 @@ const jump = () => {
     velocity -= gravity;
 
     // arms up while jumping
-    refs.leftArm.current.rotation.x = -Math.PI / 2;
-    refs.rightArm.current.rotation.x = -Math.PI / 2;
+    refs.leftArm.current.rotation.x = -Math.PI / 4;
+    refs.rightArm.current.rotation.x = -Math.PI / 4;
 
     if (robot.position.y <= groundY) {
       robot.position.y = groundY;
@@ -355,9 +357,9 @@ const jump = () => {
       if(text.includes("monoid")) return jump();
       if (text.includes("look left")) return lookLeft();
       if (text.includes("look right")) return lookRight();
-      if (text.includes("go forward") || text.includes("come forward"))
+      if (text.includes("forward") || text.includes("come forward"))
         return goForward();
-      if (text.includes("go backward") || text.includes("go back"))
+      if (text.includes("backward") || text.includes("go back"))
         return goBackward();
       if (text.includes("go left")) return goLeft();
       if (text.includes("go right")) return goRight();
