@@ -8,7 +8,7 @@ import Leg from "./Legs";
 export default forwardRef(function Robot({ refs }, ref) {
   // We now define the body ref to move the whole robot
   return (
-    <group ref={refs.body} position={[0, 0, 0]}>
+    <group ref={refs.body} scale={0.85} position={[0, 0, 0]}>
       {/* Torso */}
       <Torso ref={refs.torso} />
 

@@ -17,7 +17,9 @@ export default function UIOverlay({ refs }) {
     "go backward",
     "go left",
     "go right",
+    "run",
     "dance",
+    "take a walk",
   ];
 
   return (
@@ -30,8 +32,15 @@ export default function UIOverlay({ refs }) {
           <p className="text-sm text-cyan-300">Voice Controlled</p>
         </div>
 
-        <div className="pointer-events-auto fixed top-10 right-10 font-mono bg-[#0000005e] backdrop-blur-md rounded-xl p-4 ">
-            <h1 className="text-cyan-300 font-light text-2xl">Monoid</h1>
+        <div className="pointer-events-auto fixed top-10 right-1 md:right-10 font-mono bg-[#0000005e] backdrop-blur-md rounded-xl p-4 ">
+            <h1 className="text-cyan-300 font-light text-lg md:text-2xl">Monoid</h1>
+        </div>
+
+        <div className="hidden md:block animate-ping absolute left-50 top-60">
+            {lastCommand !== "none" && lastCommand !== "stop" ? ( <p className="text-cyan-100 font-light text-xs"> User is speaking rn...</p> ) : ( <p className="text-red-500 font-light text-xs">User hasn't said a word!!!</p> )}
+        </div>
+        <div className="hidden md:block animate-ping absolute right-50 top-60">
+            {lastCommand !== "none" && lastCommand !== "stop" ? ( <p className="text-cyan-100 font-light text-xs"> User is speaking rn...</p> ) : ( <p className="text-red-500 font-light text-xs">User hasn't said a word!!!</p> )}
         </div>
 
         {/* CENTER CONTROL */}
@@ -47,14 +56,14 @@ export default function UIOverlay({ refs }) {
           </button>
 
           {/* Last Command */}
-          <p className="text-sm">
-            Last Command: <span className="font-medium">{lastCommand}</span>
+          <p className="text-sm font-light">
+            Last Command: <span className="font-medium text-cyan-300">{lastCommand}</span>
           </p>
 
           {/* Command Guide */}
-          <div className="text-xs text-gray-300 text-center grid grid-cols-4 sm:grid-cols-6 gap-2">
+          <div className="text-xs text-gray-300 text-center grid grid-cols-4 sm:grid-cols-7 gap-2">
             {commandsList.map((cmd) => (
-              <span key={cmd} className="bg-gray-800/40 px-2 py-1 rounded font-light">
+              <span key={cmd} className="bg-gray-800/40 px-2 py-1 rounded font-light text-xs md:text-sm">
                 {cmd}
               </span>
             ))}
