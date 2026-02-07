@@ -195,7 +195,6 @@ const takeAWalk = () => {
 
     const animate = () => {
       phaseRef.current += 0.08;
-      setTimeout(() => phaseRef.current += 0.09, 2000)
       const s = Math.sin(phaseRef.current);
       const c = Math.cos(phaseRef.current);
 

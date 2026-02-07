@@ -6,7 +6,7 @@ export default function Environment() {
       <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
         <planeGeometry args={[20, 20]} />
         <meshStandardMaterial
-          color="#020617"
+          color="#0a4a55"
           roughness={0.9}
           metalness={0.05}
         />
@@ -16,7 +16,7 @@ export default function Environment() {
       <mesh position={[0, 5, -6]} receiveShadow>
         <planeGeometry args={[20, 10]} />
         <meshStandardMaterial
-          color="#020617"
+          color="#384f53"
           roughness={1}
         />
       </mesh>
